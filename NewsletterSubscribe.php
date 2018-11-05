@@ -25,19 +25,68 @@
         $showForm = false;
         if (isset($_POST['submit'])) {
             $formErrorCount = 0;
-            $DBConnect = mysqli_connect($hostName, $userName, $password);
-            if (!$DBConnect) {
-                echo "<p>Connection Error:" . mysqli_connect_error() ."</p>\n";
+
+            // check for name
+            if (!empty($_POST['subName'])) {
+                $subscriberName = stripslashes($_POST['subName']);
+                $subscriberName = trim($subscriberName);
+                if (strlen($subscriberName) == 0) {
+                    ++$formErrorCount;
+                    echo "<p>You must include your" . " <strong>Name</strong>.</p>\n";
+                }
             }
             else {
-                if (mysqli_select_db($DBConnect, $DBName)) {
-                    echo "<p>You successfully selected the \"$DBName\"" . " database.</p>\n";
+                ++$formErrorCount;
+                echo "<p> Form submittal error, no" . " <strong>Name</strong> field!</p>\n";
+            }
+            // check for email
+            if (!empty($_POST['subEmail'])) {
+                $subscriberEmail = stripslashes($_POST['subEmail']);
+                $subscriberEmail = trim($subscriberEmail);
+                if (strlen($subscriberEmail) == 0) {
+                    ++$formErrorCount;
+                    echo "<p>You must include your" . " <strong>Email</strong>.</p>\n";
+                }
+            }
+            else {
+                ++$formErrorCount;
+                echo "<p> Form submittal error, no" . " <strong>Email</strong> field!</p>\n";
+            }
+
+            if ($formErrorCount == 0) {
+                $showForm = false;
+                $DBConnect = mysqli_connect($hostName, $userName, $password);
+                if (!$DBConnect) {
+                    echo "<p>Connection Error:" . mysqli_connect_error() ."</p>\n";
                 }
                 else {
-                    echo "<p>Could not select the \"$DBName\"" . " database:" . mysqli_error($DBConnect) . ".</p>\n";
+                    if (mysqli_select_db($DBConnect, $DBName)) {
+                        echo "<p>You successfully selected the \"$DBName\"" . " database.</p>\n";
+                        $subscriberDate = date("Y-m-d");
+                        $sql = "INSERT INTO $tableName" . " (name, email, subscribeDate)" . 
+                        " VALUES ('$subscriberName'," . 
+                        " '$subscriberEmail'," . 
+                        " '$subscriberDate')";
+                        $result = mysqli_query($DBConnect, $sql);
+                        if (!$result) {
+                            echo "<p>Unable to insert the values" . 
+                            " into the <strong>$tableName</strong> table.</p>\n";
+                            echo "<p>Error code <strong>" . mysqli_errno($DBConnect) . ": " . mysqli_error($DBConnect) . 
+                            " </strong></p>\n";
+                        }
+                        else {
+
+                        }
                     }
-                echo "<p>Closing Database Connection</p>\n";
-                mysqli_close($DBConnect);
+                    else {
+                        echo "<p>Could not select the \"$DBName\"" . " database:" . mysqli_error($DBConnect) . ".</p>\n";
+                        }
+                    echo "<p>Closing Database Connection</p>\n";
+                    mysqli_close($DBConnect);
+                }
+            }
+            else {
+                $showForm = true;
             }
         }
         else {
@@ -52,7 +101,7 @@
         </p>
 
         <p><strong>Your Email:</strong><br>
-        <input type="email" name="subEmail" 
+        <input type="text" name="subEmail" 
         value="<?php echo "$subscriberEmail"; ?>">
         </p>
 
